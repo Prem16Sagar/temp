@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Bat-List &mdash; Gotham To-Do</title>
+  <style>
+    :root {
+      --bat-black: #0d0d10;
+      --bat-panel: #16161c;
+      --bat-panel-2: #1e1e26;
+      --bat-yellow: #ffd23f;
+      --bat-yellow-dim: #b8952b;
+      --bat-gray: #8a8a96;
+      --bat-line: #2a2a34;
+      --bat-danger: #e5484d;
+      --bat-green: #3ecf8e;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background:
+        radial-gradient(circle at 50% -10%, rgba(255, 210, 63, 0.10), transparent 45%),
+        linear-gradient(180deg, #0d0d10 0%, #08080a 100%);
+      color: #f2f2f5;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 32px 16px 80px;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 640px;
+    }
+
+    /* ---------- Header ---------- */
+    .header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    .bat-signal {
+      width: 92px;
+      height: 92px;
+      margin: 0 auto 12px;
+      border-radius: 50%;
+      background: radial-gradient(circle, #ffe27a 0%, var(--bat-yellow) 55%, var(--bat-yellow-dim) 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 40px rgba(255, 210, 63, 0.45), inset 0 0 20px rgba(0,0,0,0.25);
+      animation: pulse 3.2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 30px rgba(255, 210, 63, 0.35), inset 0 0 20px rgba(0,0,0,0.25); }
+      50%      { box-shadow: 0 0 55px rgba(255, 210, 63, 0.6),  inset 0 0 20px rgba(0,0,0,0.25); }
+    }
+
+    .bat-signal svg { width: 62px; height: 62px; fill: #0d0d10; }
+
+    h1 {
+      font-size: 1.9rem;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      font-weight: 800;
+    }
+    h1 .accent { color: var(--bat-yellow); }
+
+    .tagline {
+      color: var(--bat-gray);
+      font-size: 0.85rem;
+      letter-spacing: 1px;
+      margin-top: 4px;
+      font-style: italic;
+    }
+
+    /* ---------- Input ---------- */
+    .add-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    #task-input {
+      flex: 1;
+      background: var(--bat-panel);
+      border: 1px solid var(--bat-line);
+      border-radius: 10px;
+      padding: 14px 16px;
+      color: #f2f2f5;
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    #task-input::placeholder { color: #5c5c66; }
+    #task-input:focus {
+      border-color: var(--bat-yellow);
+      box-shadow: 0 0 0 3px rgba(255, 210, 63, 0.15);
+    }
+
+    #add-btn {
+      background: var(--bat-yellow);
+      color: #0d0d10;
+      border: none;
+      border-radius: 10px;
+      padding: 0 22px;
+      font-size: 1rem;
+      font-weight: 800;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: transform 0.1s, background 0.2s;
+    }
+    #add-btn:hover { background: #ffdf6b; }
+    #add-btn:active { transform: scale(0.96); }
+
+    /* ---------- Filters ---------- */
+    .filters {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      align-items: center;
+    }
+    .filter-btn {
+      background: transparent;
+      border: 1px solid var(--bat-line);
+      color: var(--bat-gray);
+      padding: 7px 14px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .filter-btn:hover { color: #f2f2f5; border-color: var(--bat-gray); }
+    .filter-btn.active {
+      background: var(--bat-yellow);
+      color: #0d0d10;
+      border-color: var(--bat-yellow);
+      font-weight: 700;
+    }
+    .spacer { flex: 1; }
+    #clear-done {
+      background: transparent;
+      border: none;
+      color: var(--bat-gray);
+      font-size: 0.78rem;
+      cursor: pointer;
+      text-decoration: underline;
+      transition: color 0.15s;
+    }
+    #clear-done:hover { color: var(--bat-danger); }
+
+    /* ---------- List ---------- */
+    ul { list-style: none; }
+
+    .task {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      background: var(--bat-panel);
+      border: 1px solid var(--bat-line);
+      border-left: 3px solid var(--bat-yellow);
+      border-radius: 10px;
+      padding: 14px 16px;
+      margin-bottom: 10px;
+      animation: drop 0.25s ease;
+    }
+    @keyframes drop {
+      from { opacity: 0; transform: translateY(-6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .check {
+      width: 22px;
+      height: 22px;
+      flex-shrink: 0;
+      border: 2px solid var(--bat-yellow-dim);
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+    }
+    .check:hover { border-color: var(--bat-yellow); }
+    .check svg { width: 14px; height: 14px; fill: #0d0d10; opacity: 0; transition: opacity 0.15s; }
+
+    .task.done .check { background: var(--bat-yellow); border-color: var(--bat-yellow); }
+    .task.done .check svg { opacity: 1; }
+    .task.done { border-left-color: var(--bat-green); opacity: 0.6; }
+    .task.done .text { text-decoration: line-through; color: var(--bat-gray); }
+
+    .text {
+      flex: 1;
+      font-size: 1rem;
+      word-break: break-word;
+    }
+
+    .del {
+      background: transparent;
+      border: none;
+      color: #4a4a54;
+      cursor: pointer;
+      font-size: 1.3rem;
+      line-height: 1;
+      padding: 4px 6px;
+      border-radius: 6px;
+      transition: all 0.15s;
+    }
+    .del:hover { color: var(--bat-danger); background: rgba(229, 72, 77, 0.1); }
+
+    /* ---------- Empty / footer ---------- */
+    .empty {
+      text-align: center;
+      color: var(--bat-gray);
+      padding: 40px 20px;
+      font-style: italic;
+    }
+    .empty .bat-small { font-size: 2.4rem; display: block; margin-bottom: 8px; opacity: 0.5; }
+
+    .stats {
+      margin-top: 18px;
+      text-align: center;
+      color: var(--bat-gray);
+      font-size: 0.82rem;
+      letter-spacing: 0.5px;
+    }
+    .stats strong { color: var(--bat-yellow); }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <div class="bat-signal" title="The Bat-Signal">
+        <svg viewBox="0 0 512 512" aria-hidden="true">
+          <path d="M256 96c-24 40-64 56-112 56 24 24 24 64 8 96 32-8 64 8 80 40 16-32 48-48 80-40-16-32-16-72 8-96-48 0-88-16-112-56z"/>
+          <path d="M256 64c-16 48-72 72-136 64 8 8 16 24 16 40-40-8-72 8-88 40 40-8 72 8 88 40 16-24 40-32 64-24-8 24 0 48 24 64 24-16 32-40 24-64 24-8 48 0 64 24 16-32 48-48 88-40-16-32-48-48-88-40 0-16 8-32 16-40-64 8-120-16-136-64z"/>
+        </svg>
+      </div>
+      <h1>The <span class="accent">Bat</span>-List</h1>
+      <p class="tagline">"It's not who I am underneath, but what I do that defines me."</p>
+    </header>
+
+    <div class="add-row">
+      <input id="task-input" type="text" placeholder="Add a mission for the night..." maxlength="200" autocomplete="off" />
+      <button id="add-btn">Deploy</button>
+    </div>
+
+    <div class="filters">
+      <button class="filter-btn active" data-filter="all">All</button>
+      <button class="filter-btn" data-filter="active">Active</button>
+      <button class="filter-btn" data-filter="done">Done</button>
+      <span class="spacer"></span>
+      <button id="clear-done">Clear completed</button>
+    </div>
+
+    <ul id="task-list"></ul>
+
+    <p class="stats" id="stats"></p>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "batlist.tasks.v1";
+    const input   = document.getElementById("task-input");
+    const addBtn  = document.getElementById("add-btn");
+    const list    = document.getElementById("task-list");
+    const stats   = document.getElementById("stats");
+    const clearBtn = document.getElementById("clear-done");
+
+    let tasks  = load();
+    let filter = "all";
+
+    function load() {
+      try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+      catch { return []; }
+    }
+    function save() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+    }
+    function uid() {
+      return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+    }
+
+    function addTask(text) {
+      text = text.trim();
+      if (!text) return;
+      tasks.unshift({ id: uid(), text, done: false });
+      save();
+      render();
+    }
+    function toggle(id) {
+      const t = tasks.find(t => t.id === id);
+      if (t) { t.done = !t.done; save(); render(); }
+    }
+    function remove(id) {
+      tasks = tasks.filter(t => t.id !== id);
+      save();
+      render();
+    }
+    function clearDone() {
+      tasks = tasks.filter(t => !t.done);
+      save();
+      render();
+    }
+
+    const CHECK_SVG = '<svg viewBox="0 0 24 24"><path d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg>';
+
+    function render() {
+      const visible = tasks.filter(t =>
+        filter === "all" ? true : filter === "active" ? !t.done : t.done
+      );
+
+      list.innerHTML = "";
+
+      if (visible.length === 0) {
+        const li = document.createElement("li");
+        li.className = "empty";
+        li.innerHTML = '<span class="bat-small">&#128012;</span>' +
+          (tasks.length === 0
+            ? "Gotham is quiet. Add your first mission."
+            : "Nothing here, Dark Knight.");
+        list.appendChild(li);
+      } else {
+        visible.forEach(t => {
+          const li = document.createElement("li");
+          li.className = "task" + (t.done ? " done" : "");
+
+          const check = document.createElement("div");
+          check.className = "check";
+          check.innerHTML = CHECK_SVG;
+          check.addEventListener("click", () => toggle(t.id));
+
+          const span = document.createElement("span");
+          span.className = "text";
+          span.textContent = t.text;
+
+          const del = document.createElement("button");
+          del.className = "del";
+          del.innerHTML = "&times;";
+          del.title = "Delete";
+          del.addEventListener("click", () => remove(t.id));
+
+          li.append(check, span, del);
+          list.appendChild(li);
+        });
+      }
+
+      const remaining = tasks.filter(t => !t.done).length;
+      const total = tasks.length;
+      stats.innerHTML = total === 0
+        ? ""
+        : `<strong>${remaining}</strong> mission${remaining === 1 ? "" : "s"} pending &middot; ${total} total`;
+    }
+
+    addBtn.addEventListener("click", () => { addTask(input.value); input.value = ""; input.focus(); });
+    input.addEventListener("keydown", e => {
+      if (e.key === "Enter") { addTask(input.value); input.value = ""; }
+    });
+    clearBtn.addEventListener("click", clearDone);
+
+    document.querySelectorAll(".filter-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        filter = btn.dataset.filter;
+        render();
+      });
+    });
+
+    render();
+  </script>
+</body>
+</html>
